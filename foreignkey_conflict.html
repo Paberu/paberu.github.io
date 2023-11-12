@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>
+		Yet another one IT blog.
+	</title>
+</head>
+<body>
+	<h1>Разрешение конфликта при взаимном обращении моделей через ForeignKey.</h1>
+	<p>При прохождении курса по Django у меня попалось следующее задание - у каждого автомобиля предприятия может быть водитель, который на данный момент является ответственным по этому автомобилю ("активный" водитель). Одновременно с этим любой водитель предприятия приписан к конкретному автомобилю (хотя сейчас он может и не быть "активным").</p>
+	<p>Я решил организовать это через ForeignKey:</p>
+	<code>
+	class Vehicle(models.Model):
+		//разнообразные не ForeignKey поля
+		active_driver = models.ForeignKey(Driver, on_delete=models.SET_NULL, null=True, blank=True, verbose_name='"Активный" водитель')
+		//методы класса
+
+	class Driver(models.Model):
+		//разнообразные не ForeignKey поля
+		car = models.ForeignKey(Vehicle, on_delete=models.SET_NULL, null=True, blank=True, related_name='drivers', verbose_name='Транспортное средство')
+		//методы класса
+	</code>
+
+	<p>Очень удобно, вот только Python - интерпретируемый язык. Он дошёл до поля `active_driver` и обнаружил, что класса Driver нигде нет (как видите, определение класса идёт ниже). Что делать в указанной ситуации интерпретатору? Правильно, тормозить работу приложения и выдавать приложение об ошибке.</p>
+	<p>Оказалось, что можно не только указывать класс ранее определённый в файле или импортированных модулях, но и просто название этого класса:</p>
+	<p>На любой странице выберите кнопку с "+" и выберите New repository (Новый репозиторий)</p>
+	<code>
+	class Vehicle(models.Model):
+		//разнообразные не ForeignKey поля
+		active_driver = models.ForeignKey('Driver', on_delete=models.SET_NULL, null=True, blank=True, verbose_name='"Активный" водитель')
+		//методы класса
+
+	class Driver(models.Model):
+		//разнообразные не ForeignKey поля
+		car = models.ForeignKey(Vehicle, on_delete=models.SET_NULL, null=True, blank=True, related_name='drivers', verbose_name='Транспортное средство')
+		//методы класса
+	</code>
+	<p>Строка вместо имени класса будто говорит интерпретатору "ты сначала обработай весь файл, все классы собери, а потом зависимости будешь проверять".</p>
+	<p>Этот метод неоднократно выручал меня в дальнейших проектах.</p>	
+	
+</body>
+</html>
