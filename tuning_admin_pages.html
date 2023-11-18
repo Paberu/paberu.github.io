@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>
+		Yet another one IT blog.
+	</title>
+</head>
+<body>
+	<h1>Тонкая настройка админки.</h1>
+	<p>В одном из проектов меня не устраивала базовая функциональность админской части приложения, т.к. помимо админов доступ предоставлялся ещё и менеджерам, и рядовым сотрудникам, и следовало очень тщательно разделять выдаваемые права. Права на доступ к отдельным классам данных прекрасно регулируются встроенными инструментами, но бывают ситуации, когда надо регулировать доступ к отдельным полям (столбцам таблицы).</p>
+	<p>Базовая настройка админской панели описана в первых строках документации. Если нам требуется включить какой-то тип данных в администрируемые, достаточно использовать декоратор:</p>
+	<code style="white-space: pre;">
+@admin.register(Driver)
+class DriverAdmin(admin.ModelAdmin):
+	# ...
+	</code>
+	<p>где <code>Driver</code> - это имя класса модели из файла models.py. Хороший стиль кодирования - имя класса модели входит в имя класса админки.</p>
+	<p>Далее в документации есть огромный набор функций, в назначении и обилии которых легко потеряться. Привожу примеры использования некоторых из них.</p>
+	<p>Метод <code>def get_readonly_fields()</code> даёт возможность настроить уровень доступа некоторым данным "только для чтения".</p>
+	<code style="white-space: pre;">
+def get_readonly_fields(self, request, obj=None):
+	if obj and obj.active_driver:
+		return ['enterprise']
+	return []
+	</code>
+	<p>Эта функция проверяет, существует ли объект, и заполнено ли у этого объекта поле <code>active_driver</code>. Если да, то смена поля <code>enterprise</code> невозможна, оно отображается в режиме <code>read-only</code>, хотя у других объектов это поле редактируемое.</p>
+	<p>По умолчанию это поле скрыто вызывается с единственной строкой: <code>return []</code>. В таком случае все поля доступны для редактирования.</p>
+	<p>Метод <code>get_queryset</code> позволяет отфильтровать данные, выдаваемые базой на запрос (<code>queryset</code>), т.е. выдать не полный набор данных, а лишь ту часть, которую допустимо показать пользователю. Речь идёт о данных того типа, который указан в декораторе <code>register</code>.</p>
+	<p>В этом проекте в каждой функции проверяется, кто сейчас онлайн. Если пользователь класса <code>Manager</code>, то любой объект надо отфильтровать по принадлежности к тому или иному курируемому предприятию (<code>Enterprise</code>).</p>
+	<code style="white-space: pre;">
+def get_manager_enterprises(request):
+	if Manager.objects.filter(user=request.user):
+		mngr = Manager.objects.get(user=request.user)
+		return mngr.enterprise.all()
+
+def get_queryset(self, request):
+	qs = super().get_queryset(request)
+	enterprises = get_manager_enterprises(request)
+	if enterprises:
+		return qs.filter(enterprise__in=enterprises)
+	return qs
+	</code>
+	<p>Такой изменённый <code>queryset</code> содержит в себе только те объекты, которые текущий менеджер может видеть (те, что относятся к курируемому предприятию).</p>
+	<p>Метод <code>get_field_queryset</code> позволяет отфильтровать содержимое конкретного поля. Допустим, предыдущей функцией мы отфильтровали отображаемые объекты. Пусть это будут автомобили (<code>Vehicle</code>). Менеджер может назначить текущего ответственного водителя на какой-то конкретный автомобиль. Но в выпадающем списке должны быть доступны только те водители, которые относятся к курируемому предприятию. Если менеджер заводит в базу новый автомобиль, то в выпадающем списке предприятий должны быть только те, с которыми работает этот менеджер, а не все предприятия вообще. Все фильтрации полей, которые в админке отображаются как выпадающий список, происходят в методе <code>get_field_queryset</code>:</p>
+	<code style="white-space: pre;">
+def get_field_queryset(self, db, db_field, request):
+	enterprises = get_manager_enterprises(request)
+	if enterprises:
+		if db_field.name == 'enterprise':
+			return Enterprise.objects.filter(id__in=enterprises)
+		if db_field.name == 'active_driver' and Manager.objects.filter(user=request.user):
+			return Driver.objects.filter(enterprise__in=enterprises)
+	return super().get_field_queryset(db, db_field, request)
+	</code>
+	<p>Если мне встретятся ещё какие-то полезные методы, будет "Тонкая настройка админки. Часть 2.".</p>
+</body>
+</html>
