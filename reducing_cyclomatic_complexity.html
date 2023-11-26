@@ -139,3 +139,74 @@ class VehicleInfoView(APIView):
         return Response(serialized_vehicles.data)
 </code></p>
 <p>Как таковой, таблицы с классами нет, есть банальный список. Но принцип действия понятен: при наличии схожих (пусть и не одинаковых) методов в разных классах полезно вынести их во внешнюю функцию. Не только с точки зрения удобства и снижения объема кода, но и с точки зрения логики проектирования - все проверки собраны в одном месте, где их легче сопровождать, расширять и т.д.</p>
+
+<h2>Разделение на подпрограммы, избавление от else.</h2>
+<p>Мой самый первый учебный проект (гитарный онлайн-магазин) на Django. Функция обновления корзины - либо обновление состояния корзины (количество или скидка), либо удаление объекта из корзины: <br />
+<code style="white-space: pre;">
+def update_cart_info(request):
+    if request.POST:
+        cart_info = {}
+        for param in request.POST:
+            value = request.POST.get(param)
+            if param.startswith('count_') and value.isnumeric():
+                product_id = param.replace('count_', '')
+                get_object_or_404(Product, pk=product_id) # чисто проверка, защита от порченной формы
+                cart_info[product_id] = int(value)
+            elif param == 'discount' and value:
+                try:
+                    discount = Discount.objects.get(code__exact=value)
+                    request.session['discount'] = value
+                except Discount.DoesNotExist:
+                    pass
+        request.session['cart_info'] = cart_info
+
+    if request.GET.get('delete_cart'):
+        product_id = request.GET.get('delete_cart')
+        get_object_or_404(Product, pk=product_id)  # чисто проверка, защита от порченной формы
+        cart_info = request.session.get('cart_info')
+        current_count = cart_info.get(product_id, 0)
+        if current_count <= 1:
+            cart_info.pop(product_id)
+        else:
+            cart_info[product_id] -= 1
+        request.session['cart_info'] = cart_info
+        return HttpResponseRedirect(reverse('cart'))
+</code></p>
+<p>Разбить большую функцию на логически выделенные малые - это уже путь к упрощению кода и снижению сложности. Так же работа с булевыми величинами (True и False) помогают организации кода.<br />
+<code style="white-space: pre;">
+def delete_from_cart(request, product_id):
+	cart_info = request.session.get('cart_info')
+	current_count = cart_info.get(product_id, 0)
+	current_count -= 1
+	if current_count < 1:
+		cart_info.pop(product_id)
+	request.session['cart_info'] = cart_info
+
+def check_discount(value):
+	try:
+		discount = Discount.objects.get(code__exact=value)
+		return True
+	except Discount.DoesNotExist:
+		return False
+
+def update_cart_info(request):
+    if request.POST:
+        cart_info = {}
+        for param in request.POST:
+            value = request.POST.get(param)
+            if param.startswith('count_') and value.isnumeric():
+                product_id = param.replace('count_', '')
+                get_object_or_404(Product, pk=product_id) # чисто проверка, защита от порченной формы
+                cart_info[product_id] = int(value)
+            if param == 'discount' and check_discount(value):
+	            request.session['discount'] = value
+        request.session['cart_info'] = cart_info
+
+    if request.GET.get('delete_cart'):
+        product_id = request.GET.get('delete_cart')
+        get_object_or_404(Product, pk=product_id)  # чисто проверка, защита от порченной формы
+        delete_from_cart(request, product_id)
+        return HttpResponseRedirect(reverse('cart'))
+</code></p>
+</body>
+</html>
