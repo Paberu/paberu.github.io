@@ -27,17 +27,17 @@ def run_callbacks(jobs):
     """ New in 1.2. Runs callbacks from the callback queue and checks arguments. """
 
     if not jobs:
-	    return
-	    
-	for job in jobs:
-		if not job[0]:
-			continue
-			
-		sig = inspect.signature(job[0])
-		args = []
-		for arg in range(len(sig.parameters)):
-			args.append(job[arg+1])
-		job[0](*args)
+        return
+        
+    for job in jobs:
+        if not job[0]:
+            continue
+            
+        sig = inspect.signature(job[0])
+        args = []
+        for arg in range(len(sig.parameters)):
+            args.append(job[arg+1])
+        job[0](*args)
 ```
 
 ## Избавление от else и "табличная" логика.
@@ -47,7 +47,7 @@ def run_callbacks(jobs):
 class VehicleInfoView(APIView):
     # некоторое количество адекватного удобочитаемого кода
     
-	# функция get(), в которой стоит убрать if..else
+    # функция get(), в которой стоит убрать if..else
     def get(self, request):
         if request.user.is_superuser:
             vehicles = Vehicle.objects.all()
@@ -76,16 +76,16 @@ class VehicleInfoView(APIView):
 class VehicleInfoView(APIView):
     # некоторое количество адекватного удобочитаемого кода
     def check_vehicle_access(request, object_type):
-		if request.user.is_superuser:
-	        return Vehicle.objects.all()
-	    if Manager.objects.filter(user=request.user):
-			mngr = Manager.objects.filter(user=request.user)[0]
-			enterprises = mngr.enterprise.all()
-			return Vehicle.objects.filter(enterprise__in=enterprises)
-		print('Error in server logic, should have failed on "check_permissions" stage.')
-		self.permission_denied(request, message='Error code: 401', code=401)
+        if request.user.is_superuser:
+            return Vehicle.objects.all()
+        if Manager.objects.filter(user=request.user):
+            mngr = Manager.objects.filter(user=request.user)[0]
+            enterprises = mngr.enterprise.all()
+            return Vehicle.objects.filter(enterprise__in=enterprises)
+        print('Error in server logic, should have failed on "check_permissions" stage.')
+        self.permission_denied(request, message='Error code: 401', code=401)
 
-	# функция get(), в которой стоит убрать if..else
+    # функция get(), в которой стоит убрать if..else
     def get(self, request):
         vehicles = check_vehicle_access(request, Vehicle)
         page = request.GET.get('page', 1)
@@ -170,19 +170,19 @@ def update_cart_info(request):
 Разбить большую функцию на логически выделенные малые - это уже путь к упрощению кода и снижению сложности. Так же работа с булевыми величинами (True и False) помогают организации кода.
 ```Python
 def delete_from_cart(request, product_id):
-	cart_info = request.session.get('cart_info')
-	current_count = cart_info.get(product_id, 0)
-	current_count -= 1
-	if current_count < 1:
-		cart_info.pop(product_id)
-	request.session['cart_info'] = cart_info
+    cart_info = request.session.get('cart_info')
+    current_count = cart_info.get(product_id, 0)
+    current_count -= 1
+    if current_count < 1:
+        cart_info.pop(product_id)
+    request.session['cart_info'] = cart_info
 
 def check_discount(value):
-	try:
-		discount = Discount.objects.get(code__exact=value)
-		return True
-	except Discount.DoesNotExist:
-		return False
+    try:
+        discount = Discount.objects.get(code__exact=value)
+        return True
+    except Discount.DoesNotExist:
+        return False
 
 def update_cart_info(request):
     if request.POST:
@@ -194,7 +194,7 @@ def update_cart_info(request):
                 get_object_or_404(Product, pk=product_id) # чисто проверка, защита от порченной формы
                 cart_info[product_id] = int(value)
             if param == 'discount' and check_discount(value):
-	            request.session['discount'] = value
+                request.session['discount'] = value
         request.session['cart_info'] = cart_info
 
     if request.GET.get('delete_cart'):
