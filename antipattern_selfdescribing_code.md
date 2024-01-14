@@ -1,6 +1,7 @@
 # Антипаттерн "Самодокументирующийся код"
 
 1. Класс Vacancy из приложения HHParser:
+
 https://github.com/Paberu/HeadHunterParser/blob/with_gui/Vacancy.py
 ```Python
 TAXES = 0.13  
@@ -34,6 +35,7 @@ class Vacancy:
 ```
 
 2. Класс Book из приложения BookOpinion:
+
    https://github.com/Paberu/BookOpinion/blob/main/Book.py
 ```Python
 class Book:  
@@ -61,6 +63,7 @@ class Book:
 ```
 
 3. Класс Command из Django-приложения Autopark:
+
 https://github.com/Paberu/Autopark/blob/master/park/management/commands/generate_random_objects.py
 ```Python
 class Command(BaseCommand):  
