@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>
+		Yet another one IT blog.
+	</title>
+</head>
+<body>
+	<h1>Защита полей класса от изменений.</h1>
+
+<p>Когда мы пишем код, например, на Java, то обычно все поля являются приватными, а получение/присвоение значений происходит с помощью функций геттеров/сеттеров. В Python по умолчанию к любому полю объекта можно обратиться через оператор <code>.</code>:
+<br />
+<code style="white-space: pre;">
+current_book.title = title
+</code></p>
+
+<p>Я уже писал, что protected-поля получаются, если задать имя поля с префиксом <code>_</code>:
+</br>
+<code style="white-space: pre;">
+current_book._title = title
+</code></p>
+
+<p>И такую конструкцию можно задать в любом месте кода, несмотря на некоторую сокрытость данного поля.</p>
+
+<p>В Python есть две встроенных функции getattr и setattr, которые позволяют задать значение любого поля класса (даже если в конструкторе такого нет) и получить значение любого поля класса (если таковой имеется).</p>
+
+<p>Я создал кортеж с именами всех полей, которые могут быть заданы в классе Book приложения BookOpinion. И написал две функции, которые защищают поля класса от несанкционированных изменений:
+<br />
+<code style="white-space: pre;">
+BOOK_FIELDS = ('_Book__title', '_Book__author', '_Book__writing_year', '_Book__publication_year', '_Book__rating', '_Book__opinion')
+# здесь объявление класса
+# и функция __init__
+
+def get_field(self, field_name):  
+    if field_name not in self.BOOK_FIELDS:  
+        raise AttributeError('Нельзя обращаться к полям, которых нет')  
+    return getattr(self, field_name)  
+  
+def set_field(self, field_name, value):  
+    if field_name not in self.BOOK_FIELDS:  
+        raise AttributeError('Нельзя создавать новые поля')  
+    setattr(self, field_name, value)
+</code>
+</p>
+<p>Теперь легче отслеживать, какие функции меняют поля объекта, свести количество точек к минимуму, что облегчает поддержку и сопровождение. </p>
+
+</body>
+</html>
