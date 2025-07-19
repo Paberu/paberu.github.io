@@ -1,7 +1,8 @@
 # Три правила простого проектного дизайна. Правило 3. Избегать увлечения примитивными типами данных.
 
-Как избегать увлечения примитивными типами данных, если кажется, что ты уже матёрый программист и тебе такая беда не грозит. Открываю Spear and Spirit - проект, который я начал, когда изучал тонкости ООАП. Он представляет собой попытку начинающего геймдевелопера создать HoMM-подобную пошаговую стратегию. Смотрю код TestHero.py, смотрю на такой участок кода:
+Как избегать увлечения примитивными типами данных, если кажется, что ты уже матёрый программист и тебе такая беда не грозит.
 
+Снова открываю Spear and Spirit, смотрю код TestHero.py, нахожу такой участок кода: стратегию. Смотрю код TestHero.py, смотрю на такой участок кода:
 ```Python
 class TestHero(unittest.TestCase):  
   
@@ -16,7 +17,6 @@ class TestHero(unittest.TestCase):
 ```
 
 Что такое GreenDragon? Открываю Unit.py:
-
 ```Python
 class GreenDragon(Unit):  
   
@@ -25,7 +25,6 @@ class GreenDragon(Unit):
 ```
 
 Что значат все эти числа? Если посмотреть конструктор Unit, там найдётся упоминание о них:
-
 ```Python
 def __init__(self, attack, defence, health, movement):  
     self._attack = attack  
@@ -35,7 +34,6 @@ def __init__(self, attack, defence, health, movement):
 ```
 
 Как и у рыцаря с варваром в конструкторе родительского класса указано следующее: 
-
 ```Python
 def __init__(self, attack: int, defence:int, knowledge:int, power:int, sprite:GraphicObject):  
     self.__attack = attack  
